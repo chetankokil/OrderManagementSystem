@@ -32,7 +32,7 @@ object OMSServer {
     orders.flatMap(o => o.items).find(item => item.id == itemId)
   }
 
-  def fetchOrder(orderId: Long): Future[Option[Order]] = findAll.map(o => o.find(o => o.id == orderId))
+  def fetchOrder(orderId: Long): Future[Option[Order]] = findByID(orderId)
 
   def saveOrder(order: Order) : Future[Done] = {
     save(order).transact(xa).as(Done).unsafeToFuture()

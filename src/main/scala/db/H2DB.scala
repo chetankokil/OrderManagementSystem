@@ -25,6 +25,15 @@ object H2DB {
     """.update
       .run
 
+  def findByID(id: Long) =
+    sql"""
+         select * from Order where id = $id
+         """
+      .query[Order]
+      .unique
+      .transact(xa)
+      .unsafeToFuture
+
 
   def findAll =
     sql"""
