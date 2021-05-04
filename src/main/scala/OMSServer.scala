@@ -12,13 +12,16 @@ import scala.io.StdIn
 
 object OMSServer {
 
+  import db.H2DB._
+  import db._
+  import doobie.implicits._
+  import doobie.h2.implicits._
+
+
   implicit val system = ActorSystem(Behaviors.empty, "System")
   implicit val ec = system.executionContext
   var orders: List[Order] = Nil
 
-
-  final case class Item(name: String, id: Long)
-  final case class Order( items: List[Item], id:Long)
 
 
   implicit val itemFormat = jsonFormat2(Item)
@@ -29,18 +32,10 @@ object OMSServer {
     orders.flatMap(o => o.items).find(item => item.id == itemId)
   }
 
-  def fetchOrder(orderId: Long): Future[Option[Order]] = Future {
-    orders.foreach(println)
-    orders.find(o => o.id == orderId)
-  }
+  def fetchOrder(orderId: Long): Future[Option[Order]] = findAll.map(o => o.find(o => o.id == orderId))
 
   def saveOrder(order: Order) : Future[Done] = {
-    orders = order match {
-      case Order(id, items) => Order(id,items) :: orders
-      case _ => orders
-    }
-
-    Future { Done }
+    save(order).transact(xa).as(Done).unsafeToFuture()
   }
 
   def main(args: Array[String]): Unit = {
